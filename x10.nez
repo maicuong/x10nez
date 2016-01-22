@@ -85,17 +85,149 @@ example Type (ID : Int) => Int
 
 
 /* Statements */
-Block                     = { '{}' #Stub }
-Statement                 = { 'stmt' #Stub }
+Block                     = { '{' BlockStmts? '}' #Stub }
+  BlockStmts              = BlockInteriorStmt
+                          / BlockStmts BlockInteriorStmt
+    BlockInteriorStmt     = LocVarDeclnStmt
+                          / ClassDecln
+                          / StructDecln
+                          / TypeDefDecln
+                          / Stmt
 
 example Block {}
 example Block '''
-{
-  class X{}
-  var x = 1;
-}
-'''
-example Statement ;
+        {
+          class X{}
+            var x = 1;
+         }
+       '''
+
+Statement                 =  Emptystatement
+                          / LocVarDeclnStmt
+                          / ExpStmt
+                          / LabeledStatement
+                          / BreakStmt
+                          / ContinueStmt
+                          / IfThenStmt
+                          / IfThenElseStmt
+                          / SwitchStmt
+                          / WhileStmt
+                          / DoStmt
+                          / ForStmt
+                          / ReturnStmt
+                          / AssertStmt
+                          / ThrowStmt
+                          / TryStmt
+                          / AsyncStmt
+                          / FinishSt\mt
+                          / AtEachStmt
+                          / AtomicStmt
+                          / WhenStmt
+
+  Emptystatement = !.
+
+
+  LocVarDecln = ModsVarKeywordVariableDeclrs
+                / ModVarDEclsWType
+                /MosVarKeywordFormalDeclrs
+  LocVarDeclnStmt = LocVarDecln
+  VarDeclsWType = VarDeclsWType
+                  / VarDeclsWType VarDeclWType
+  VariableDeclrs = VariableDeclrs
+                  / VariableDeclrs VariableDeclr
+  VaribleInitializer = Exp
+  FormalDeclrs = FormalDeclr
+                / FormalDeclrs FormalDeclr
+
+
+  ExpStmt = StmtExp
+  StmtExp = Assignment
+          / PreInclementExp
+          / PreDecrementExp
+          / PostIncrementExp
+          / MethodInvo
+          / ObCreationExp
+
+
+  LabeledStatement = Id ':' Statement
+
+
+  BreakStmt = "break" Id?
+
+
+  ContinueStmt = "continue" Id?
+
+
+  IfThenStmt = "if" "(" Exp ")" Stmt
+  IfThenElseStmt = "if" "(" Exp ")" Stmt "else" Stmt
+
+
+  SwitchStmt = "switch" "(" Exp ")" SwitchBlock
+  SwitchBlock = "{" SwitchBlockGroups? SwitchLabels? "}"
+  SwitchBlockGroups = SwitchBlockGroup
+                      / SwitchBlockGroups SwitchBlockGroup
+  SwitchBlockGroup = SwitchLabels BlockStmts
+  SwitchLabels = SwitchLabel
+                / SwitchLabels SwitchLabel
+  SwitchLabel = "case" ConstantExp ":"
+              / "default" ":"
+
+
+  WhileStmt = "while" "(" Exp ")" Stmt
+
+
+  DoStmt = "do" Stmt "while" "(" Exp ")"
+
+
+  ForStmt = BasicForStmt
+          / EnhancedForStmt
+  BasicForStmt = "for" "(" ForInit? ";" Exp? ";" ForUpdate? ")" Stmt
+  ForInit = StmtExpList
+          / LocVarDecln
+  ForUpdate = StmtExpList
+  StmtExpList = StmtExp
+              / StmtExpList "," StmtExp
+  EnhancedForStmt = "for" "(" LoopIndex "in" Exp ")" Stmt
+                  / "for" "(" Exp ")" Stmt
+
+
+  ReturnStmt = "return" Exp?
+
+
+  AssertStmt = "assert" Exp
+             / "assert" Exp ":" Exp
+
+
+  ThrowStmt = "throw" Exp
+
+
+  TryStmt = "try" Block Catches
+          / "try" Block Catches? Finally
+  Catches = CatchClause
+          / Catches CatchClause
+  CatchClause = "catch" "(" Formal ")" Block
+  Finally = "finally" Block
+
+
+  AsyncStmt = "async" ClockedClause? Stmt
+            / "clocked" "async" Stmt
+  ClockedClause = "clocked" Arguments "("
+
+  FinishStmt = "finish" Stmt
+              / "clocked" "finish" Stmt
+
+  AtEachStmt = "ateach" "(" LoopIndex "in" Exp ")" ClockedClause? Stmt
+              / "ateach" "(" Exp ")" Stmt
+  LoopIndexDeclr = Id HasResultType?
+                  /  "[" IdList "]" HasResultType?
+                  / Id "[" IdList "]" HasResultType?
+  LoopIndex = Mods? LoopIndexDeclr
+            / Mods? VarKeyword LoopIndexDeclr
+
+  AtomicStmt = "atomic" Stmt
+  WhenStmt = "when" "(" Exp ")" Stmt
+
+
 example Statement var x = 1;
 example Statement {}
 example Statement exp;
@@ -139,7 +271,7 @@ example Statement ateach(li in exp) {}
 example Statement ateach(exp) {}
 example Statement atomic {}
 example Statement when(exp) {}
-
+\
 
 /* Expressions */
 Arguments                 = { '()' #Stub }
@@ -374,4 +506,3 @@ KEYWORD                   = "abstract" / "as" / "assert" / "async" / "at"
 "!~"                      = '!~'
 "-<"                      = '-<'
 ">-"                      = '>-'
-
