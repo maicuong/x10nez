@@ -85,22 +85,22 @@ example Type (ID : Int) => Int
 
 
 /* Statements */
-Block                     = { '{' BlockStmts? '}' #Stub }
-  BlockStmts              = BlockInteriorStmt
+Block                     = { '{' _ BlockStmts? _ '}' #Stub }
+BlockStmts                = BlockInteriorStmt
                           / BlockStmts BlockInteriorStmt
-    BlockInteriorStmt     = LocVarDeclnStmt
+BlockInteriorStmt         = LocVarDeclnStmt
                           / ClassDecln
                           / StructDecln
                           / TypeDefDecln
-                          / Stmt
+                          / Statement
 
 example Block {}
 example Block '''
-        {
-          class X{}
-            var x = 1;
-         }
-       '''
+{
+  class X{}
+  var x = 1;
+}
+'''
 
 Statement                 =  Emptystatement
                           / LocVarDeclnStmt
@@ -119,12 +119,12 @@ Statement                 =  Emptystatement
                           / ThrowStmt
                           / TryStmt
                           / AsyncStmt
-                          / FinishSt\mt
+                          / FinishStmt
                           / AtEachStmt
                           / AtomicStmt
                           / WhenStmt
 
-  Emptystatement = !.
+  Emptystatement =  {";" #Emptystatement}
 
 
   LocVarDecln = ModsVarKeywordVariableDeclrs
@@ -135,7 +135,7 @@ Statement                 =  Emptystatement
                   / VarDeclsWType VarDeclWType
   VariableDeclrs = VariableDeclrs
                   / VariableDeclrs VariableDeclr
-  VaribleInitializer = Exp
+  VaribleInitializer = Expression
   FormalDeclrs = FormalDeclr
                 / FormalDeclrs FormalDeclr
 
@@ -149,83 +149,83 @@ Statement                 =  Emptystatement
           / ObCreationExp
 
 
-  LabeledStatement = Id ':' Statement
+  LabeledStatement = {Identifier _ ':' _ Statement #LabeledStatement}
 
 
-  BreakStmt = "break" Id?
+  BreakStmt = {"break" _ Identifier? #BreakStmt}
 
 
-  ContinueStmt = "continue" Id?
+  ContinueStmt = {"continue" _ Identifier? #ContinueStmt}
 
 
-  IfThenStmt = "if" "(" Exp ")" Stmt
-  IfThenElseStmt = "if" "(" Exp ")" Stmt "else" Stmt
+  IfThenStmt = {"if" _ "(" _ Expression _ ")" _ Statement #IfThenStmt}
+  IfThenElseStmt = {"if" _ "(" _ Expression _ ")" _ Statement _ "else" _ Statement #IfThenElseStmt}
 
 
-  SwitchStmt = "switch" "(" Exp ")" SwitchBlock
-  SwitchBlock = "{" SwitchBlockGroups? SwitchLabels? "}"
+  SwitchStmt = {"switch" _ "(" _ Expression _ ")" _ SwitchBlock  #SwitchStmt}
+  SwitchBlock = {"{" _ SwitchBlockGroups? _ SwitchLabels? _ "}" #SwitchBlock}
   SwitchBlockGroups = SwitchBlockGroup
                       / SwitchBlockGroups SwitchBlockGroup
   SwitchBlockGroup = SwitchLabels BlockStmts
   SwitchLabels = SwitchLabel
                 / SwitchLabels SwitchLabel
-  SwitchLabel = "case" ConstantExp ":"
-              / "default" ":"
+  SwitchLabel = {"case" _ ConstantExp _ ":" #SwitchLabel}
+              / {"default" _ ":" #SwitchLabel}
 
 
-  WhileStmt = "while" "(" Exp ")" Stmt
+  WhileStmt = {"while" _ "(" _ Expression _ ")" _ Statement #WhileStmt}
 
 
-  DoStmt = "do" Stmt "while" "(" Exp ")"
+  DoStmt = {"do" _ Statement _ "while" _ "(" _ Expression _ ")" #DoStmt}
 
 
   ForStmt = BasicForStmt
           / EnhancedForStmt
-  BasicForStmt = "for" "(" ForInit? ";" Exp? ";" ForUpdate? ")" Stmt
+  BasicForStmt = {"for" _ "(" _ ForInit? _ ";" _ Expression? _ ";" _ ForUpdate? _ ")" _ Statement #BasicForStmt}
   ForInit = StmtExpList
           / LocVarDecln
   ForUpdate = StmtExpList
-  StmtExpList = StmtExp
-              / StmtExpList "," StmtExp
-  EnhancedForStmt = "for" "(" LoopIndex "in" Exp ")" Stmt
-                  / "for" "(" Exp ")" Stmt
+  StmtExpList = {StmtExp #StmtExpList}
+              / {StmtExpList _ "," _ StmtExp #StmtExpList}
+  EnhancedForStmt = {"for" _ "(" _ LoopIndex _ "in" _ Expression _ ")" _ Statement #EnhancedForStmt }
+                  / {"for" _ "(" _ Expression _ ")" _ Statement #EnhancedForStmt}
 
 
-  ReturnStmt = "return" Exp?
+  ReturnStmt = {"return" _ Expression? #ReturnStmt}
 
 
-  AssertStmt = "assert" Exp
-             / "assert" Exp ":" Exp
+  AssertStmt = {"assert" _ Expression #AssertStmt}
+             / {"assert" _ Expression _ ":" _ Expression #AssertStmt}
 
 
-  ThrowStmt = "throw" Exp
+  ThrowStmt = {"throw" _ Expression #ThrowStmt}
 
 
-  TryStmt = "try" Block Catches
-          / "try" Block Catches? Finally
+  TryStmt = {"try" _ Block _ Catches #TryStmt}
+          / {"try" _ Block _ Catches? _ Finally #TryStmt}
   Catches = CatchClause
           / Catches CatchClause
-  CatchClause = "catch" "(" Formal ")" Block
-  Finally = "finally" Block
+  CatchClause = {"catch" _ "(" _ Formal _ ")" _ Block #CatchClause}
+  Finally = {"finally" _ Block #Finally}
 
 
-  AsyncStmt = "async" ClockedClause? Stmt
-            / "clocked" "async" Stmt
-  ClockedClause = "clocked" Arguments "("
+  AsyncStmt = {"async" _ ClockedClause? _ Statement #AsyncStmt}
+            / {"clocked" _ "async" _ Statement #AsyncStmt}
+  ClockedClause = {"clocked" _ Arguments _ "(" #ClockedClause}
 
-  FinishStmt = "finish" Stmt
-              / "clocked" "finish" Stmt
+  FinishStmt = {"finish" _ Statement #FinishStmt}
+              / {"clocked" _ "finish" _ Statement #FinishStmt}
 
-  AtEachStmt = "ateach" "(" LoopIndex "in" Exp ")" ClockedClause? Stmt
-              / "ateach" "(" Exp ")" Stmt
-  LoopIndexDeclr = Id HasResultType?
-                  /  "[" IdList "]" HasResultType?
-                  / Id "[" IdList "]" HasResultType?
-  LoopIndex = Mods? LoopIndexDeclr
-            / Mods? VarKeyword LoopIndexDeclr
+  AtEachStmt = {"ateach" _ "(" _ LoopIndex _ "in" _ Expression _ ")" _ ClockedClause? _ Statement #AtEachStmt}
+              / {"ateach" _ "(" _ Expression _ ")" _ Statement #AtEachStmt}
+  LoopIndexDeclr = {Id _ HasResultType? #LoopIndexDeclr}
+                  /  {"[" _ IdList _ "]" _ HasResultType? #LoopIndexDeclr}
+                  / {Id _ "[" _ IdList _ "]" _ HasResultType? #LoopIndexDeclr}
+  LoopIndex = {Mods? _ LoopIndexDeclr #LoopIndex}
+            / {Mods? _ VarKeyword _ LoopIndexDeclr #LoopIndex}
 
-  AtomicStmt = "atomic" Stmt
-  WhenStmt = "when" "(" Exp ")" Stmt
+  AtomicStmt = {"atomic" _ Statement #AtomicStmt}
+  WhenStmt = {"when" _ "(" _ Expression _ ")" _ Statement #WhenStmt}
 
 
 example Statement var x = 1;
@@ -271,7 +271,7 @@ example Statement ateach(li in exp) {}
 example Statement ateach(exp) {}
 example Statement atomic {}
 example Statement when(exp) {}
-\
+
 
 /* Expressions */
 Arguments                 = { '()' #Stub }
