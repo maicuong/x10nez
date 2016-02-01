@@ -16,6 +16,7 @@ ImportDeclarations        = { 'import I;' #Stub }
 
 TypeDeclarations          = { 'class X{}' #Stub }
 ClassDeclaration          = { 'class X{}' #Stub }
+ClassBody                 = { '{}' #Stub }
 StructDeclaration         = { 'struct X{}' #Stub }
 InterfaceDeclaration      = { 'interface X{}' #Stub }
 TypeDefDeclaration        = { 'type ID = int;' #Stub }
@@ -27,7 +28,11 @@ PropertyMethodDeclaration = { 'x() {}' #Stub }
 FieldDeclaration          = { 'x:Int;' #Stub }
 LocalVariableDeclaration  = { 'var x = 1' #Stub }
 Formals                   = { '(ID : Int)' #Stub }
+Formal                    = { '(ID : Int)' #Stub }
 LoopIndex                 = { 'li' #Stub }
+
+Guard                     = { '{}' #Stub }
+HasResultType             = { '<: Int' #Stub }
 
 example PackageDeclaration '''
 package ID.ID;
@@ -43,7 +48,7 @@ example TypeDeclaration '''
 struct ID {}
 '''
 example TypeDeclaration '''
-Interface ID extends ID, ID {}
+interface ID extends ID, ID {}
 '''
 example MethodDeclaration '''
 public def ID(ID : Int) : int {}
@@ -70,6 +75,11 @@ var ID : Int;
 
 /* Types */
 Type                      = { 'Int' #Stub }
+NamedType                 = { 'Int' #Stub }
+
+DepParams                 = { '{exp}' #Stub }
+
+TypeName                  = { 'Int' #Stub }
 
 Annotations               = { '@A' #Stub }
 
@@ -85,14 +95,112 @@ example Type (ID : Int) => Int
 
 
 /* Statements */
-Block                     = { '{' _ BlockStmts? _ '}' #Stub }
-BlockStmts                = BlockInteriorStmt
-                          / BlockStmts BlockInteriorStmt
-BlockInteriorStmt         = LocVarDeclnStmt
-                          / ClassDecln
-                          / StructDecln
-                          / TypeDefDecln
+Block = { ' '}
+//Block                     = { "{" _ $(BlockStatements) _ "}" #Block }
+//BlockStatements = { 'b'}
+BlockStatements                = {$(BlockInteriorStatement)/ ($(BlockStatements) _ $(BlockInteriorStatement)) #BlockStatements}
+//BlockInteriorStatement = { ' '}
+BlockInteriorStatement    = LocalVariableDeclarationStatement
+                          / ClassDeclaration
+                          / StructDeclaration
+                          / TypeDefDeclaration
                           / Statement
+// _BlockStatements       = #Stub
+//Statement                 = { 'stmt' #Stub }
+Statement                 =  EmptyStatement
+                          / LocalVariableDeclarationStatement
+                          / ExpressionStatement
+                          / LabeledStatement
+                          / BreakStatement
+                          / ContinueStatement
+                          / IfThenStatement
+                          / IfThenElseStatement
+                          / SwitchStatement
+                          / WhileStatement
+                          / DoStatement
+                          / ForStatement
+                          / ReturnStatement
+                          / AssertStatement
+                          / ThrowStatement
+                          / TryStatement
+                          / AsyncStatement
+                          / FinishStatement
+                          / AtEachStatement
+                          / AtomicStatement
+                          / WhenStatement
+
+EmptyStatement =  {";" #EmptyStatement}
+
+LocalVariableDeclarationStatement = { $(LocalVariableDeclaration) _ ";" #LocalVariableDeclarationStatement}
+
+ExpressionStatement = StatementExpression
+
+LabeledStatement = {$(Identifier) _ ':' _ $(Statement) #LabeledStatement}
+
+BreakStatement = {"break" _ $(Identifier)? #BreakStatement}
+
+ContinueStatement = {"continue" _ $(Identifier)? #ContinueStatement}
+
+IfThenStatement = {"if" _ "(" _ $(Expression) _ ")" _ $(Statement) #IfThenStatement}
+IfThenElseStatement = {"if" _ "(" _ $(Expression) _ ")" _ $(Statement) _ "else" _ $(Statement) #IfThenElseStatement}
+
+SwitchStatement = {"switch" _ "(" _ $(Expression) _ ")" _ $(SwitchBlock)  #SwitchStmt}
+//SwitchBlock = { ' '}
+SwitchBlock = {"{" _ $(SwitchBlockGroups)? _ $(SwitchLabels)? _ "}" #SwitchBlock}
+//SwitchBlockGroups = { ' '}
+SwitchBlockGroups = { $(SwitchBlockGroup) (_ $(SwitchBlockGroup))? #SwitchBlockGroups}
+//SwitchBlockGroup = { ' '}
+
+SwitchBlockGroup = {$(SwitchLabels) _ $(BlockStatements) #SwitchBlockGroup}
+//SwitchLabels = { ' '}
+SwitchLabels = { $(SwitchLabel) (_ $(SwitchLabel))? #SwitchLabels}
+//              / SwitchLabels _ SwitchLabel
+
+//SwitchLabel = { ' '}
+SwitchLabel = {("case" _ $(ConstantExpression) _ ":")
+             / ("default" _ ":") #SwitchLabel}
+//ConstantExpression = Expression
+
+WhileStatement = {"while" _ "(" _ $(Expression) _ ")" _ $(Statement) #WhileStatement}
+
+
+DoStatement = {"do" _ $(Statement) _ "while" _ "(" _ $(Expression) _ ")" #DoStatement}
+
+ForStatement = BasicForStatement
+        / EnhancedForStatement
+BasicForStatement = {"for" _ "(" _ $(ForInit)? _ ";" _ $(Expression)? _ ";" _ $(ForUpdate)? _ ")" _ $(Statement) #BasicForStatement}
+ForInit = StatementExpressionList
+        / LocalVariableDeclaration
+ForUpdate = StatementExpressionList
+EnhancedForStatement = {("for" _ "(" _ $(LoopIndex) _ "in" _ $(Expression) _ ")" _ $(Statement))
+                / ("for" _ "(" _ $(Expression) _ ")" _ $(Statement)) #EnhancedForStatement}
+
+ReturnStatement = {"return" _ $(Expression)? #ReturnStatement}
+
+
+AssertStatement = {("assert" _ $(Expression)) _ (":" _ $(Expression))? #AssertStatement}
+
+ThrowStatement = {"throw" _ $(Expression) #ThrowStatement}
+
+TryStatement = {("try" _ $(Block) _ $(Catches))
+        / ("try" _ $(Block) _ $(Catches)? _ $(Finally)) #TryStmt}
+Catches = CatchClause
+        / Catches _ CatchClause
+CatchClause = {"catch" _ "(" _ $(Formal) _ ")" _ $(Block) #CatchClause}
+Finally = {"finally" _ $(Block) #Finally}
+
+AsyncStatement = {("async" _ $(ClockedClause)? _ $(Statement))
+          / ("clocked" _ "async" _ $(Statement)) #AsyncStmt}
+ClockedClause = {"clocked" _ $(Arguments) _ "(" #ClockedClause}
+
+FinishStatement = {("finish" _ $(Statement))
+            / ("clocked" _ "finish" _ $(Statement)) #FinishStmt}
+
+AtEachStatement = {("ateach" _ "(" _ $(LoopIndex) _ "in" _ $(Expression) _ ")" _ $(ClockedClause)? _ $(Statement))
+            / ("ateach" _ "(" _ $(Expression) _ ")" _ $(Statement)) #AtEachStmt}
+
+AtomicStatement = {"atomic" _ $(Statement) #AtomicStmt}
+WhenStatement = {"when" _ "(" _ $(Expression) _ ")" _ $(Statement) #WhenStmt}
 
 example Block {}
 example Block '''
@@ -101,145 +209,18 @@ example Block '''
   var x = 1;
 }
 '''
-
-Statement                 =  Emptystatement
-                          / LocVarDeclnStmt
-                          / ExpStmt
-                          / LabeledStatement
-                          / BreakStmt
-                          / ContinueStmt
-                          / IfThenStmt
-                          / IfThenElseStmt
-                          / SwitchStmt
-                          / WhileStmt
-                          / DoStmt
-                          / ForStmt
-                          / ReturnStmt
-                          / AssertStmt
-                          / ThrowStmt
-                          / TryStmt
-                          / AsyncStmt
-                          / FinishStmt
-                          / AtEachStmt
-                          / AtomicStmt
-                          / WhenStmt
-
-  Emptystatement =  {";" #Emptystatement}
-
-
-  LocVarDecln = ModsVarKeywordVariableDeclrs
-                / ModVarDEclsWType
-                /MosVarKeywordFormalDeclrs
-  LocVarDeclnStmt = LocVarDecln
-  VarDeclsWType = VarDeclsWType
-                  / VarDeclsWType VarDeclWType
-  VariableDeclrs = VariableDeclrs
-                  / VariableDeclrs VariableDeclr
-  VaribleInitializer = Expression
-  FormalDeclrs = FormalDeclr
-                / FormalDeclrs FormalDeclr
-
-
-  ExpStmt = StmtExp
-  StmtExp = Assignment
-          / PreInclementExp
-          / PreDecrementExp
-          / PostIncrementExp
-          / MethodInvo
-          / ObCreationExp
-
-
-  LabeledStatement = {Identifier _ ':' _ Statement #LabeledStatement}
-
-
-  BreakStmt = {"break" _ Identifier? #BreakStmt}
-
-
-  ContinueStmt = {"continue" _ Identifier? #ContinueStmt}
-
-
-  IfThenStmt = {"if" _ "(" _ Expression _ ")" _ Statement #IfThenStmt}
-  IfThenElseStmt = {"if" _ "(" _ Expression _ ")" _ Statement _ "else" _ Statement #IfThenElseStmt}
-
-
-  SwitchStmt = {"switch" _ "(" _ Expression _ ")" _ SwitchBlock  #SwitchStmt}
-  SwitchBlock = {"{" _ SwitchBlockGroups? _ SwitchLabels? _ "}" #SwitchBlock}
-  SwitchBlockGroups = SwitchBlockGroup
-                      / SwitchBlockGroups SwitchBlockGroup
-  SwitchBlockGroup = SwitchLabels BlockStmts
-  SwitchLabels = SwitchLabel
-                / SwitchLabels SwitchLabel
-  SwitchLabel = {"case" _ ConstantExp _ ":" #SwitchLabel}
-              / {"default" _ ":" #SwitchLabel}
-
-
-  WhileStmt = {"while" _ "(" _ Expression _ ")" _ Statement #WhileStmt}
-
-
-  DoStmt = {"do" _ Statement _ "while" _ "(" _ Expression _ ")" #DoStmt}
-
-
-  ForStmt = BasicForStmt
-          / EnhancedForStmt
-  BasicForStmt = {"for" _ "(" _ ForInit? _ ";" _ Expression? _ ";" _ ForUpdate? _ ")" _ Statement #BasicForStmt}
-  ForInit = StmtExpList
-          / LocVarDecln
-  ForUpdate = StmtExpList
-  StmtExpList = {StmtExp #StmtExpList}
-              / {StmtExpList _ "," _ StmtExp #StmtExpList}
-  EnhancedForStmt = {"for" _ "(" _ LoopIndex _ "in" _ Expression _ ")" _ Statement #EnhancedForStmt }
-                  / {"for" _ "(" _ Expression _ ")" _ Statement #EnhancedForStmt}
-
-
-  ReturnStmt = {"return" _ Expression? #ReturnStmt}
-
-
-  AssertStmt = {"assert" _ Expression #AssertStmt}
-             / {"assert" _ Expression _ ":" _ Expression #AssertStmt}
-
-
-  ThrowStmt = {"throw" _ Expression #ThrowStmt}
-
-
-  TryStmt = {"try" _ Block _ Catches #TryStmt}
-          / {"try" _ Block _ Catches? _ Finally #TryStmt}
-  Catches = CatchClause
-          / Catches CatchClause
-  CatchClause = {"catch" _ "(" _ Formal _ ")" _ Block #CatchClause}
-  Finally = {"finally" _ Block #Finally}
-
-
-  AsyncStmt = {"async" _ ClockedClause? _ Statement #AsyncStmt}
-            / {"clocked" _ "async" _ Statement #AsyncStmt}
-  ClockedClause = {"clocked" _ Arguments _ "(" #ClockedClause}
-
-  FinishStmt = {"finish" _ Statement #FinishStmt}
-              / {"clocked" _ "finish" _ Statement #FinishStmt}
-
-  AtEachStmt = {"ateach" _ "(" _ LoopIndex _ "in" _ Expression _ ")" _ ClockedClause? _ Statement #AtEachStmt}
-              / {"ateach" _ "(" _ Expression _ ")" _ Statement #AtEachStmt}
-  LoopIndexDeclr = {Id _ HasResultType? #LoopIndexDeclr}
-                  /  {"[" _ IdList _ "]" _ HasResultType? #LoopIndexDeclr}
-                  / {Id _ "[" _ IdList _ "]" _ HasResultType? #LoopIndexDeclr}
-  LoopIndex = {Mods? _ LoopIndexDeclr #LoopIndex}
-            / {Mods? _ VarKeyword _ LoopIndexDeclr #LoopIndex}
-
-  AtomicStmt = {"atomic" _ Statement #AtomicStmt}
-  WhenStmt = {"when" _ "(" _ Expression _ ")" _ Statement #WhenStmt}
-
-
-example Statement var x = 1;
+example Statement ;
 example Statement {}
-example Statement exp;
+example Statement exp++;
 example Statement break;
 example Statement break ID;
 example Statement continue;
 example Statement if(exp) break;
 example Statement while(exp) {}
 example Statement do {} while(exp);
-example Statement for(exp; exp; exp) {}
+example Statement for(var x = 1; exp; exp++) {}
 example Statement return exp;
-example Statement ID : return;
+example Statement ID : while(exp) {}
 example Statement assert exp;
 example Statement assert exp : exp;
 example Statement throw exp;
@@ -263,7 +244,7 @@ try {
 '''
 example Statement at(exp) {}
 example Statement async {}
-example Statement async clocked() {}
+example Statement async clocked(exp) {}
 example Statement clocked async {}
 example Statement finish {}
 example Statement clocked finish {}
@@ -275,7 +256,13 @@ example Statement when(exp) {}
 
 /* Expressions */
 Arguments                 = { '()' #Stub }
+ArgumentList              = { '' #Stub }
 Expression                = { 'exp' #Stub }
+
+PrimaryExpression         = { 'exp' #Stub }
+
+StatementExpressionList   = { 'exp++' #Stub }
+StatementExpression       = { 'exp++' #Stub }
 
 example Expression ID
 example Expression 1
@@ -317,6 +304,7 @@ example Expression at(this) ID
 
 
 /* Identifiers */
+IdentifierList            = { 'ID' #Stub }
 Identifier                = { 'ID' #Stub }
 FullyQualifiedName        = { 'ID' #Stub }
 
@@ -388,7 +376,7 @@ KEYWORD                   = "abstract" / "as" / "assert" / "async" / "at"
                           / "self" / "static" / "struct" / "super" / "switch"
                           / "this" / "throw" / "transient" / "true" / "try"
                           / "type" / "val" / "var" / "void" / "when"
-                          / "while"
+                          / "while" / "throws"
 "abstract"                = 'abstract' !W
 "as"                      = 'as' !W
 "assert"                  = 'assert' !W
@@ -450,6 +438,7 @@ KEYWORD                   = "abstract" / "as" / "assert" / "async" / "at"
 "void"                    = 'void' !W
 "when"                    = 'when' !W
 "while"                   = 'while' !W
+"throws"                  = 'throws' !W
 "("                       = '('
 ")"                       = ')'
 "{"                       = '{'
@@ -461,7 +450,7 @@ KEYWORD                   = "abstract" / "as" / "assert" / "async" / "at"
 "."                       = '.' ![.]
 "=="                      = '=='
 "!="                      = '!='
-"<"                       = '<' ![:<=]
+"<"                       = '<' !( '-' / [:<=] )
 ">"                       = '>' !( '-' / [=>] )
 "<="                      = '<='
 ">="                      = '>='
@@ -506,3 +495,4 @@ KEYWORD                   = "abstract" / "as" / "assert" / "async" / "at"
 "!~"                      = '!~'
 "-<"                      = '-<'
 ">-"                      = '>-'
+"<-"                      = '<-'
