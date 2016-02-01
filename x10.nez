@@ -95,10 +95,10 @@ example Type (ID : Int) => Int
 
 
 /* Statements */
-Block = { ' '}
-//Block                     = { "{" _ $(BlockStatements) _ "}" #Block }
+//Block = { '{' _ '}'}
+Block                     = { "{" $(BlockStatements)? "}" _ #Block }
 //BlockStatements = { 'b'}
-BlockStatements                = {$(BlockInteriorStatement)/ ($(BlockStatements) _ $(BlockInteriorStatement)) #BlockStatements}
+BlockStatements                = { _ ($(BlockInteriorStatement) _ ( _ $(BlockInteriorStatement))* ) _ #BlockStatements}
 //BlockInteriorStatement = { ' '}
 BlockInteriorStatement    = LocalVariableDeclarationStatement
                           / ClassDeclaration
@@ -107,7 +107,8 @@ BlockInteriorStatement    = LocalVariableDeclarationStatement
                           / Statement
 // _BlockStatements       = #Stub
 //Statement                 = { 'stmt' #Stub }
-Statement                 =  EmptyStatement
+Statement                 = Block
+                          / EmptyStatement
                           / LocalVariableDeclarationStatement
                           / ExpressionStatement
                           / LabeledStatement
@@ -126,40 +127,41 @@ Statement                 =  EmptyStatement
                           / AsyncStatement
                           / FinishStatement
                           / AtEachStatement
+                          / AtStatement
                           / AtomicStatement
                           / WhenStatement
 
 EmptyStatement =  {";" #EmptyStatement}
 
-LocalVariableDeclarationStatement = { $(LocalVariableDeclaration) _ ";" #LocalVariableDeclarationStatement}
+LocalVariableDeclarationStatement = { $(LocalVariableDeclaration) _ ";" _ #LocalVariableDeclarationStatement}
 
 ExpressionStatement = StatementExpression
 
 LabeledStatement = {$(Identifier) _ ':' _ $(Statement) #LabeledStatement}
 
-BreakStatement = {"break" _ $(Identifier)? #BreakStatement}
+BreakStatement = {"break" _ $(Identifier)? _ #BreakStatement}
 
 ContinueStatement = {"continue" _ $(Identifier)? #ContinueStatement}
 
 IfThenStatement = {"if" _ "(" _ $(Expression) _ ")" _ $(Statement) #IfThenStatement}
 IfThenElseStatement = {"if" _ "(" _ $(Expression) _ ")" _ $(Statement) _ "else" _ $(Statement) #IfThenElseStatement}
 
-SwitchStatement = {"switch" _ "(" _ $(Expression) _ ")" _ $(SwitchBlock)  #SwitchStmt}
+SwitchStatement = {"switch" _ "(" _ $(Expression) _ ")" _ $(SwitchBlock) _ #SwitchStmt}
 //SwitchBlock = { ' '}
-SwitchBlock = {"{" _ $(SwitchBlockGroups)? _ $(SwitchLabels)? _ "}" #SwitchBlock}
+SwitchBlock = {"{" _ $(SwitchBlockGroups)? _ $(SwitchLabels)? _ "}" _ #SwitchBlock}
 //SwitchBlockGroups = { ' '}
-SwitchBlockGroups = { $(SwitchBlockGroup) (_ $(SwitchBlockGroup))? #SwitchBlockGroups}
+SwitchBlockGroups = { $(SwitchBlockGroup) _ (_ $(SwitchBlockGroup) _ )* _ #SwitchBlockGroups}
 //SwitchBlockGroup = { ' '}
 
-SwitchBlockGroup = {$(SwitchLabels) _ $(BlockStatements) #SwitchBlockGroup}
+SwitchBlockGroup = {$(SwitchLabels) _ $(BlockStatements) _ #SwitchBlockGroup}
 //SwitchLabels = { ' '}
-SwitchLabels = { $(SwitchLabel) (_ $(SwitchLabel))? #SwitchLabels}
+SwitchLabels = { $(SwitchLabel) _ (_ $(SwitchLabel) _)* _ #SwitchLabels}
 //              / SwitchLabels _ SwitchLabel
 
 //SwitchLabel = { ' '}
-SwitchLabel = {("case" _ $(ConstantExpression) _ ":")
-             / ("default" _ ":") #SwitchLabel}
-//ConstantExpression = Expression
+SwitchLabel = {(_ "case" _ $(ConstantExpression) _ ":" _)
+             / (_ "default" _ ":" _) #SwitchLabel}
+ConstantExpression = Expression
 
 WhileStatement = {"while" _ "(" _ $(Expression) _ ")" _ $(Statement) #WhileStatement}
 
@@ -182,22 +184,24 @@ AssertStatement = {("assert" _ $(Expression)) _ (":" _ $(Expression))? #AssertSt
 
 ThrowStatement = {"throw" _ $(Expression) #ThrowStatement}
 
-TryStatement = {("try" _ $(Block) _ $(Catches))
+TryStatement = {("try" _ $(Block) _ $(Catches) _ )
         / ("try" _ $(Block) _ $(Catches)? _ $(Finally)) #TryStmt}
-Catches = CatchClause
-        / Catches _ CatchClause
-CatchClause = {"catch" _ "(" _ $(Formal) _ ")" _ $(Block) #CatchClause}
-Finally = {"finally" _ $(Block) #Finally}
+Catches = { _ $(CatchClause)  _ ( _ $(CatchClause))* _ #Catches}
+        // Catches _ CatchClause _
+CatchClause = { _ "catch" _ "(" _ $(Formal) _ ")" _ $(Block) _ #CatchClause}
+Finally = { _ "finally" _ $(Block) #Finally}
 
 AsyncStatement = {("async" _ $(ClockedClause)? _ $(Statement))
           / ("clocked" _ "async" _ $(Statement)) #AsyncStmt}
-ClockedClause = {"clocked" _ $(Arguments) _ "(" #ClockedClause}
+ClockedClause = {"clocked" _ $(Arguments) _  #ClockedClause}
 
 FinishStatement = {("finish" _ $(Statement))
             / ("clocked" _ "finish" _ $(Statement)) #FinishStmt}
 
 AtEachStatement = {("ateach" _ "(" _ $(LoopIndex) _ "in" _ $(Expression) _ ")" _ $(ClockedClause)? _ $(Statement))
             / ("ateach" _ "(" _ $(Expression) _ ")" _ $(Statement)) #AtEachStmt}
+
+AtStatement = { "at" _ "(" _ $(Expression) _  ")" _ $(Statement) #AtStatement}
 
 AtomicStatement = {"atomic" _ $(Statement) #AtomicStmt}
 WhenStatement = {"when" _ "(" _ $(Expression) _ ")" _ $(Statement) #WhenStmt}
