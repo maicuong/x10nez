@@ -95,18 +95,14 @@ example Type (ID : Int) => Int
 
 
 /* Statements */
-//Block = { '{' _ '}'}
 Block                     = { "{" $(BlockStatements)? "}" _ #Block }
-//BlockStatements = { 'b'}
 BlockStatements                = { _ ($(BlockInteriorStatement) _ ( _ $(BlockInteriorStatement))* ) _ #BlockStatements}
-//BlockInteriorStatement = { ' '}
 BlockInteriorStatement    = LocalVariableDeclarationStatement
                           / ClassDeclaration
                           / StructDeclaration
                           / TypeDefDeclaration
                           / Statement
-// _BlockStatements       = #Stub
-//Statement                 = { 'stmt' #Stub }
+
 Statement                 = Block
                           / EmptyStatement
                           / LocalVariableDeclarationStatement
@@ -147,18 +143,10 @@ IfThenStatement = {"if" _ "(" _ $(Expression) _ ")" _ $(Statement) #IfThenStatem
 IfThenElseStatement = {"if" _ "(" _ $(Expression) _ ")" _ $(Statement) _ "else" _ $(Statement) #IfThenElseStatement}
 
 SwitchStatement = {"switch" _ "(" _ $(Expression) _ ")" _ $(SwitchBlock) _ #SwitchStmt}
-//SwitchBlock = { ' '}
 SwitchBlock = {"{" _ $(SwitchBlockGroups)? _ $(SwitchLabels)? _ "}" _ #SwitchBlock}
-//SwitchBlockGroups = { ' '}
 SwitchBlockGroups = { $(SwitchBlockGroup) _ (_ $(SwitchBlockGroup) _ )* _ #SwitchBlockGroups}
-//SwitchBlockGroup = { ' '}
-
 SwitchBlockGroup = {$(SwitchLabels) _ $(BlockStatements) _ #SwitchBlockGroup}
-//SwitchLabels = { ' '}
 SwitchLabels = { $(SwitchLabel) _ (_ $(SwitchLabel) _)* _ #SwitchLabels}
-//              / SwitchLabels _ SwitchLabel
-
-//SwitchLabel = { ' '}
 SwitchLabel = {(_ "case" _ $(ConstantExpression) _ ":" _)
              / (_ "default" _ ":" _) #SwitchLabel}
 ConstantExpression = Expression
@@ -187,7 +175,6 @@ ThrowStatement = {"throw" _ $(Expression) #ThrowStatement}
 TryStatement = {("try" _ $(Block) _ $(Catches) _ )
         / ("try" _ $(Block) _ $(Catches)? _ $(Finally)) #TryStmt}
 Catches = { _ $(CatchClause)  _ ( _ $(CatchClause))* _ #Catches}
-        // Catches _ CatchClause _
 CatchClause = { _ "catch" _ "(" _ $(Formal) _ ")" _ $(Block) _ #CatchClause}
 Finally = { _ "finally" _ $(Block) #Finally}
 
