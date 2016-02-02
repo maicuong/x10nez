@@ -14,6 +14,9 @@ W                         = [a-zA-Z_0-9]
 PackageDeclaration        = { 'package P;' #Stub }
 ImportDeclarations        = { 'import I;' #Stub }
 
+PackageName               = { 'P' #Stub }
+PackageOrTypeName         = { 'P' #Stub }
+
 TypeDeclarations          = { 'class X{}' #Stub }
 ClassDeclaration          = { 'class X{}' #Stub }
 ClassBody                 = { '{}' #Stub }
@@ -28,10 +31,10 @@ PropertyMethodDeclaration = { 'x() {}' #Stub }
 FieldDeclaration          = { 'x:Int;' #Stub }
 LocalVariableDeclaration  = { 'var x = 1' #Stub }
 Formals                   = { '(ID : Int)' #Stub }
-Formal                    = { '(ID : Int)' #Stub }
+Formal                    = { 'ID : Int' #Stub }
 LoopIndex                 = { 'li' #Stub }
 
-Guard                     = { '{}' #Stub }
+Guard                     = { '{exp}' #Stub }
 HasResultType             = { '<: Int' #Stub }
 
 example PackageDeclaration '''
@@ -60,16 +63,16 @@ example PropertyMethodDeclaration '''
 property ID(ID : Int) = exp;
 '''
 example FieldDeclaration '''
-private var ID : Int = 1;
+private var ID : Int = exp;
 '''
 example LocalVariableDeclaration '''
-var ID : Int = 1;
+var ID : Int = exp
 '''
 example LocalVariableDeclaration '''
-val ID = 1;
+val ID = exp
 '''
 example LocalVariableDeclaration '''
-var ID : Int;
+var ID : Int
 '''
 
 
@@ -79,9 +82,14 @@ NamedType                 = { 'Int' #Stub }
 
 DepParams                 = { '{exp}' #Stub }
 
+ClassType                 = { 'Int' #Stub }
+InterfaceTypeList         = { 'Int' #Stub }
+ThrowsList                = { 'Int' #Stub }
+
 TypeName                  = { 'Int' #Stub }
 
 Annotations               = { '@A' #Stub }
+Annotation                = { '@A' #Stub }
 
 TypeArguments             = { '[Int,Int]' #Stub }
 TypeParameters            = { '[ID,ID]' #Stub }
@@ -102,6 +110,8 @@ BlockInteriorStatement    = LocalVariableDeclarationStatement
                           / StructDeclaration
                           / TypeDefDeclaration
                           / Statement
+
+LocalVariableDeclarationStatement = { 'var x = 1;' #Stub }
 
 Statement                 = Block
                           / EmptyStatement
@@ -246,11 +256,13 @@ example Statement when(exp) {}
 
 
 /* Expressions */
-Arguments                 = { '()' #Stub }
-ArgumentList              = { '' #Stub }
+Arguments                 = { '(exp)' #Stub }
+ArgumentList              = { 'exp' #Stub }
 Expression                = { 'exp' #Stub }
 
+//ClosureExpression
 PrimaryExpression         = { 'exp' #Stub }
+//array constructor is here
 
 StatementExpressionList   = { 'exp++' #Stub }
 StatementExpression       = { 'exp++' #Stub }
@@ -286,9 +298,9 @@ example Expression ID == 1
 example Expression Int == Int
 example Expression ID instanceof Int
 example Expression (ID != 1) ? ID : ID
-example Expression new ID()
+example Expression new Int()
 example Expression ID.new ID()
-example Expression new ID() {}
+example Expression new Int() {}
 example Expression [1, 1, 1]
 example Expression (ID : Int) => @A {}
 example Expression at(this) ID
