@@ -95,7 +95,7 @@ example Type (ID : Int) => Int
 
 
 /* Statements */
-Block                     = { "{" $(BlockStatements)? "}" _ #Block }
+Block                     = { "{" _ $(BlockStatements)?  "}" _ #Block }
 BlockStatements                = { _ ($(BlockInteriorStatement) _ ( _ $(BlockInteriorStatement))* ) _ #BlockStatements}
 BlockInteriorStatement    = LocalVariableDeclarationStatement
                           / ClassDeclaration
